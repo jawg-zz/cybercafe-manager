@@ -17,16 +17,6 @@ services:
     
     volumes:
       - cafe-data:/app/data
-    healthcheck:
-      test:
-        - CMD
-        - python
-        - -c
-        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://0.0.0.0:8002/health', timeout=3).status==200 else 1)"
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
     networks:
       - dokploy-network
 
@@ -37,9 +27,6 @@ services:
     init: true
     expose:
       - "80"
-    depends_on:
-      backend:
-        condition: service_healthy
     labels:
       - traefik.docker.network=dokploy-network
       - traefik.http.routers.agents-openclaw-ay7y6u-357-web.rule=Host(`cyber.spidmax.win`)
