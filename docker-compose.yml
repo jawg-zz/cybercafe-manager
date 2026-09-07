@@ -1,5 +1,5 @@
 services:
-  backend:
+  cyber-backend:
     build:
       context: ./backend
     restart: unless-stopped
@@ -20,7 +20,7 @@ services:
     networks:
       - dokploy-network
 
-  frontend:
+  cyber-frontend:
     build:
       context: ./frontend
     restart: unless-stopped
