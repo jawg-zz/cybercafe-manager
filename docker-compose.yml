@@ -81,5 +81,15 @@ services:
           cpus: "0.25"
           memory: 128M
 
+# Explicit subnet so this project does NOT consume Docker's default bridge
+# address pool (which exhausts after ~14 networks on busy Dokploy servers).
+# Override CAFE_SUBNET if 10.99.0.0/24 is already taken on the host.
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${CAFE_SUBNET:-10.99.0.0/24}
+
 volumes:
   cafe-data:
