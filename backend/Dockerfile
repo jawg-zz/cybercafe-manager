@@ -7,6 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# SQLite lives in /app/data (mounted as a volume in compose)
+RUN mkdir -p /app/data
+
 EXPOSE 8002
 
 CMD ["sh", "-c", "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8002"]

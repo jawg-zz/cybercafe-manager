@@ -1,0 +1,9 @@
+# Local override — publishes ports for direct browser access.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+services:
+  backend:
+    ports:
+      - "8002:8002"
+  frontend:
+    ports:
+      - "8080:80"

@@ -1,23 +1,85 @@
+# Dokploy-optimized deployment.
+#
+# - Healthchecks let Dokploy show container health and wait for readiness
+#   before routing traffic.
+# - `expose` (not `ports`): Dokploy's reverse proxy reaches the container on
+#   its internal port. Add `ports` back only for direct local access.
+# - Set SECRET_KEY / MPESA_* in Dokploy's environment variables; the
+#   defaults are safe for local/dev use.
+# - Configure the public domain in the Dokploy UI — it injects the Traefik
+#   labels automatically.
+
 services:
   backend:
-    build: ./backend
-    ports:
-      - "8002:8002"
+    build:
+      context: ./backend
+    restart: unless-stopped
+    init: true
+    expose:
+      - "8002"
     environment:
       - DATABASE_URL=sqlite:///./data/cybercafe.db
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - MPESA_ENV=${MPESA_ENV:-sandbox}
+      - MPESA_CONSUMER_KEY=${MPESA_CONSUMER_KEY:-}
+      - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET:-}
+      - MPESA_PASSKEY=${MPESA_PASSKEY:-}
+      - MPESA_SHORTCODE=${MPESA_SHORTCODE:-}
     volumes:
       - cafe-data:/app/data
-    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
 
   frontend:
-    build: ./frontend
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend
+    build:
+      context: ./frontend
     restart: unless-stopped
+    init: true
+    expose:
+      - "80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
 
 volumes:
   cafe-data:

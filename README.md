@@ -57,13 +57,30 @@ The Vite dev server proxies `/api` to the backend on port 8002.
 ### Docker (recommended for deployment)
 
 ```bash
-docker compose up --build
+# Local run (publishes ports on localhost):
+docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 # Frontend: http://localhost:8080   Backend API: http://localhost:8002
 ```
 
 The frontend container (nginx) serves the built SPA and proxies `/api` to the
 backend container. The SQLite database persists in the `cafe-data` volume.
 Set `SECRET_KEY` (and M-Pesa vars) via environment or a `.env` file.
+On Dokploy the base compose is used as-is — it exposes ports internally only,
+so no host conflicts.
+
+### Deploying on Dokploy
+
+The `docker-compose.yml` is tuned for Dokploy:
+
+1. Create a new project → **Docker Compose** (Advanced) service.
+2. Point it at this repository (or paste the compose file).
+3. In **Environment**, set `SECRET_KEY` (and `MPESA_*` when going live).
+4. Add your domain in the Dokploy UI — it injects the Traefik labels
+   automatically; the containers are reachable on their internal ports
+   (`backend:8002`, `frontend:80`).
+5. Deploy. Healthchecks report container status and the frontend only starts
+   after the backend is healthy; the SQLite DB persists in the `cafe-data`
+   volume across redeploys.
 
 ### Tests
 
