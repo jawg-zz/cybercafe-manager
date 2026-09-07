@@ -52,6 +52,7 @@ services:
       - cyber-net
       - dokploy-network
 networks:
+  cybernet:
   dokploy-network:
     external: true
 
