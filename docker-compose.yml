@@ -1,17 +1,3 @@
-# Dokploy deployment.
-#
-# Services are named uniquely (cyber-backend / cyber-frontend) so they can
-# never collide with services from other projects on the shared Dokploy host.
-#
-# Networking:
-#   cyber-net       - private bridge for frontend <-> backend API traffic.
-#                     Explicit subnet (overridable via CAFE_BACKEND_SUBNET)
-#                     so it never consumes Docker's default address pool.
-#   dokploy-network - external network owned by Dokploy; Traefik joins it to
-#                     reach this stack. The backend also uses it for outbound
-#                     egress (live M-Pesa Daraja calls).
-#
-# Domain (cyber.spidmax.win) and its Traefik labels are managed in Dokploy.
 
 services:
   cyber-backend:
@@ -55,7 +41,7 @@ services:
           cpus: "0.5"
           memory: 512M
     networks:
-      - cyber-net
+      - dokploy-network
 
   cyber-frontend:
     build:
@@ -100,7 +86,6 @@ services:
           memory: 128M
     networks:
       - dokploy-network
-      - cyber-net
 
 networks:
   cyber-net:
