@@ -1,14 +1,3 @@
-# Dokploy-optimized deployment.
-#
-# - Healthchecks let Dokploy show container health and wait for readiness
-#   before routing traffic.
-# - `expose` (not `ports`): Dokploy's reverse proxy reaches the container on
-#   its internal port. Add `ports` back only for direct local access.
-# - Set SECRET_KEY / MPESA_* in Dokploy's environment variables; the
-#   defaults are safe for local/dev use.
-# - Configure the public domain in the Dokploy UI — it injects the Traefik
-#   labels automatically.
-
 services:
   backend:
     build:
@@ -25,34 +14,11 @@ services:
       - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET:-}
       - MPESA_PASSKEY=${MPESA_PASSKEY:-}
       - MPESA_SHORTCODE=${MPESA_SHORTCODE:-}
+    
     volumes:
       - cafe-data:/app/data
-    healthcheck:
-      test:
-        - CMD
-        - python
-        - -c
-        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3).status==200 else 1)"
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    stop_grace_period: 10s
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
     networks:
-      - backend-net
-      - default
+      - cyber-net    
 
   frontend:
     build:
@@ -64,48 +30,30 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    stop_grace_period: 10s
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    labels:
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.entrypoints=web
+      - traefik.http.services.agents-openclaw-ay7y6u-357-web.loadbalancer.server.port=80
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.service=agents-openclaw-ay7y6u-357-web
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.entrypoints=websecure
+      - traefik.http.services.agents-openclaw-ay7y6u-357-websecure.loadbalancer.server.port=80
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.service=agents-openclaw-ay7y6u-357-websecure
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.tls=true    
+    
     deploy:
       resources:
         limits:
           cpus: "0.25"
           memory: 128M
     networks:
-      - backend-net
-      - default
-
-# Custom networks with explicit subnets so this project never consumes
-# Docker's default bridge address pool (which exhausts after ~14 networks
-# on busy Dokploy servers).
-#
-# backend-net: internal (no external gateway) — carries frontend <-> backend
-#   API traffic only, so the API is never directly reachable from outside
-#   the stack.
-# default: Dokploy's Traefik joins this network to reach the frontend; the
-#   backend also uses it for outbound egress (live M-Pesa Daraja calls).
+      - cyber-net
+      - dokploy-network
 networks:
-  backend-net:
-    internal: true
-    ipam:
-      config:
-        - subnet: ${CAFE_BACKEND_SUBNET:-10.99.0.0/24}
-  default:
-    ipam:
-      config:
-        - subnet: ${CAFE_FRONTEND_SUBNET:-10.100.0.0/24}
+  dokploy-network:
+    external: true
 
 volumes:
   cafe-data:
