@@ -1,5 +1,20 @@
+# Dokploy deployment.
+#
+# Services are named uniquely (cyber-backend / cyber-frontend) so they can
+# never collide with services from other projects on the shared Dokploy host.
+#
+# Networking:
+#   cyber-net       - private bridge for frontend <-> backend API traffic.
+#                     Explicit subnet (overridable via CAFE_BACKEND_SUBNET)
+#                     so it never consumes Docker's default address pool.
+#   dokploy-network - external network owned by Dokploy; Traefik joins it to
+#                     reach this stack. The backend also uses it for outbound
+#                     egress (live M-Pesa Daraja calls).
+#
+# Domain (cyber.spidmax.win) and its Traefik labels are managed in Dokploy.
+
 services:
-  backend:
+  cyber-backend:
     build:
       context: ./backend
     restart: unless-stopped
@@ -14,19 +29,50 @@ services:
       - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET:-}
       - MPESA_PASSKEY=${MPESA_PASSKEY:-}
       - MPESA_SHORTCODE=${MPESA_SHORTCODE:-}
-    
     volumes:
       - cafe-data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
     networks:
-      - cyber-net     
+      - cyber-net
 
-  frontend:
+  cyber-frontend:
     build:
       context: ./frontend
     restart: unless-stopped
     init: true
     expose:
       - "80"
+    depends_on:
+      cyber-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       - traefik.docker.network=dokploy-network
       - traefik.http.routers.agents-openclaw-ay7y6u-357-web.rule=Host(`cyber.spidmax.win`)
@@ -38,8 +84,15 @@ services:
       - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.entrypoints=websecure
       - traefik.http.services.agents-openclaw-ay7y6u-357-websecure.loadbalancer.server.port=80
       - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.service=agents-openclaw-ay7y6u-357-websecure
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.tls=true    
-    
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.tls=true
+    stop_grace_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
@@ -48,8 +101,12 @@ services:
     networks:
       - dokploy-network
       - cyber-net
+
 networks:
   cyber-net:
+    ipam:
+      config:
+        - subnet: ${CAFE_BACKEND_SUBNET:-10.99.0.0/24}
   dokploy-network:
     external: true
 

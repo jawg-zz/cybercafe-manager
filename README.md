@@ -77,22 +77,20 @@ The `docker-compose.yml` is tuned for Dokploy:
 3. In **Environment**, set `SECRET_KEY` (and `MPESA_*` when going live).
 4. Add your domain in the Dokploy UI — it injects the Traefik labels
    automatically; the containers are reachable on their internal ports
-   (`backend:8002`, `frontend:80`).
+   (`cyber-backend:8002`, `cyber-frontend:80`).
 5. Deploy. Healthchecks report container status and the frontend only starts
    after the backend is healthy; the SQLite DB persists in the `cafe-data`
    volume across redeploys.
 
-**Networking:** the stack uses two custom networks with explicit subnets, so
-it never consumes Docker's default bridge address pool (which exhausts after
-~14 networks on busy servers):
+**Networking:** the stack uses two custom networks:
 
-- `backend-net` — **internal** (no external gateway). Carries frontend ↔
-  backend API traffic only; the API is never directly reachable from outside.
-- `default` — Dokploy's Traefik joins this network to reach the frontend; the
-  backend also uses it for outbound egress (live M-Pesa Daraja calls).
-
-Subnets are overridable via `CAFE_BACKEND_SUBNET` / `CAFE_FRONTEND_SUBNET`
-if `10.99.0.0/24` or `10.100.0.0/24` are already taken on the host.
+- `cyber-net` — private bridge for frontend ↔ backend API traffic, with an
+  explicit subnet so it never consumes Docker's default address pool (which
+  exhausts after ~14 networks on busy servers). Override via
+  `CAFE_BACKEND_SUBNET` if `10.99.0.0/24` is already taken on the host.
+- `dokploy-network` — **external**, owned by Dokploy. Traefik joins it to
+  reach the frontend; the backend also uses it for outbound egress (live
+  M-Pesa Daraja calls).
 
 ### Tests
 
