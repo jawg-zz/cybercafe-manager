@@ -18,7 +18,7 @@ services:
     volumes:
       - cafe-data:/app/data
     networks:
-      - cyber-net    
+      - dokploy-network
 
   frontend:
     build:
@@ -49,10 +49,8 @@ services:
           cpus: "0.25"
           memory: 128M
     networks:
-      - cyber-net
       - dokploy-network
 networks:
-  cyber-net:
   dokploy-network:
     external: true
 
