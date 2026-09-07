@@ -6,19 +6,23 @@ const links = [
   { to: "/stations", label: "Stations" },
   { to: "/sessions", label: "Sessions" },
   { to: "/pos", label: "POS & Extras" },
+  { to: "/payments", label: "Payments" },
+  { to: "/products", label: "Products" },
   { to: "/customers", label: "Customers" },
   { to: "/reports", label: "Reports" },
-  { to: "/settings", label: "Settings" },
+  { to: "/settings", label: "Settings", admin: true },
+  { to: "/users", label: "Staff", admin: true },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const visible = links.filter((l) => !l.admin || user?.role === "admin");
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">🖥️ Cyber Cafe</div>
         <nav>
-          {links.map((l) => (
+          {visible.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}

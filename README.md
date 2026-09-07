@@ -23,9 +23,12 @@ reports, and role-based staff access.
 - **POS & extras** — snacks, drinks, printing, photocopy; stock levels;
   items added straight to a session's bill
 - **Payments** — cash and M-Pesa (STK-push stub, swap in real Daraja
-  credentials when ready), receipts with references
+  credentials when ready), receipts with references; payment history page
+- **Products & stock** — add/edit products, adjust stock levels
+- **Staff** — admin-managed users with roles (admin / cashier / technician)
 - **Reports** — live dashboard, 7-day revenue, station utilization, CSV export
 - **Settings** — cafe name, currency, tax rate, default rate, business hours
+- **Role-based UI** — cashiers/technicians only see what their role allows
 
 ## Quick start
 
@@ -50,6 +53,17 @@ npm run dev                          # http://127.0.0.1:5173
 ```
 
 The Vite dev server proxies `/api` to the backend on port 8002.
+
+### Docker (recommended for deployment)
+
+```bash
+docker compose up --build
+# Frontend: http://localhost:8080   Backend API: http://localhost:8002
+```
+
+The frontend container (nginx) serves the built SPA and proxies `/api` to the
+backend container. The SQLite database persists in the `cafe-data` volume.
+Set `SECRET_KEY` (and M-Pesa vars) via environment or a `.env` file.
 
 ### Tests
 
@@ -78,9 +92,11 @@ backend/
   tests/            # pytest suite (27 tests)
 frontend/
   src/
-    pages/          # Dashboard, Stations, Sessions, POS, Customers, Reports, Settings
+    pages/          # Dashboard, Stations, Sessions, POS, Payments, Products,
+                    # Customers, Reports, Settings, Staff
     components/     # Layout
     api.js          # fetch wrapper with JWT
+docker-compose.yml  # backend + frontend (nginx) one-command deployment
 ```
 
 ## M-Pesa

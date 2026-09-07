@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=sqlite:///./data/cybercafe.db
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - MPESA_ENV=${MPESA_ENV:-sandbox}
+    volumes:
+      - cafe-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  cafe-data:

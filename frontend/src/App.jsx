@@ -7,12 +7,22 @@ import Stations from "./pages/Stations";
 import Sessions from "./pages/Sessions";
 import Customers from "./pages/Customers";
 import POS from "./pages/POS";
+import Payments from "./pages/Payments";
+import Products from "./pages/Products";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Users from "./pages/Users";
 
 function Protected({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function AdminOnly({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "admin") return <Navigate to="/" replace />;
   return children;
 }
 
@@ -34,8 +44,25 @@ export default function App() {
           <Route path="sessions" element={<Sessions />} />
           <Route path="customers" element={<Customers />} />
           <Route path="pos" element={<POS />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="products" element={<Products />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
+          <Route
+            path="settings"
+            element={
+              <AdminOnly>
+                <Settings />
+              </AdminOnly>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <AdminOnly>
+                <Users />
+              </AdminOnly>
+            }
+          />
         </Route>
       </Routes>
     </AuthProvider>
