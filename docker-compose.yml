@@ -1,5 +1,5 @@
 services:
-  cyber-backend:
+  backend:
     build:
       context: ./backend
     restart: unless-stopped
@@ -18,9 +18,9 @@ services:
     volumes:
       - cafe-data:/app/data
     networks:
-      - dokploy-network
+      - cyber-net     
 
-  cyber-frontend:
+  frontend:
     build:
       context: ./frontend
     restart: unless-stopped
@@ -47,6 +47,7 @@ services:
           memory: 128M
     networks:
       - dokploy-network
+      - cyber-net
 networks:
   dokploy-network:
     external: true
