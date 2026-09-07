@@ -50,6 +50,9 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+    networks:
+      - backend-net
+      - default
 
   frontend:
     build:
@@ -80,16 +83,29 @@ services:
         limits:
           cpus: "0.25"
           memory: 128M
+    networks:
+      - backend-net
+      - default
 
-# Explicit subnet so this project does NOT consume Docker's default bridge
-# address pool (which exhausts after ~14 networks on busy Dokploy servers).
-# Override CAFE_SUBNET if 10.99.0.0/24 is already taken on the host.
+# Custom networks with explicit subnets so this project never consumes
+# Docker's default bridge address pool (which exhausts after ~14 networks
+# on busy Dokploy servers).
+#
+# backend-net: internal (no external gateway) — carries frontend <-> backend
+#   API traffic only, so the API is never directly reachable from outside
+#   the stack.
+# default: Dokploy's Traefik joins this network to reach the frontend; the
+#   backend also uses it for outbound egress (live M-Pesa Daraja calls).
 networks:
-  default:
-    driver: bridge
+  backend-net:
+    internal: true
     ipam:
       config:
-        - subnet: ${CAFE_SUBNET:-10.99.0.0/24}
+        - subnet: ${CAFE_BACKEND_SUBNET:-10.99.0.0/24}
+  default:
+    ipam:
+      config:
+        - subnet: ${CAFE_FRONTEND_SUBNET:-10.100.0.0/24}
 
 volumes:
   cafe-data:

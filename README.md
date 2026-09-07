@@ -82,6 +82,18 @@ The `docker-compose.yml` is tuned for Dokploy:
    after the backend is healthy; the SQLite DB persists in the `cafe-data`
    volume across redeploys.
 
+**Networking:** the stack uses two custom networks with explicit subnets, so
+it never consumes Docker's default bridge address pool (which exhausts after
+~14 networks on busy servers):
+
+- `backend-net` — **internal** (no external gateway). Carries frontend ↔
+  backend API traffic only; the API is never directly reachable from outside.
+- `default` — Dokploy's Traefik joins this network to reach the frontend; the
+  backend also uses it for outbound egress (live M-Pesa Daraja calls).
+
+Subnets are overridable via `CAFE_BACKEND_SUBNET` / `CAFE_FRONTEND_SUBNET`
+if `10.99.0.0/24` or `10.100.0.0/24` are already taken on the host.
+
 ### Tests
 
 ```bash
