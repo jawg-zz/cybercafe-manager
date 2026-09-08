@@ -1,31 +1,48 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { useToast } from "../components/Toast";
+import PageHeader from "../components/PageHeader";
 
 export default function Settings() {
+  const { toast, error: errToast } = useToast();
   const [form, setForm] = useState(null);
-  const [error, setError] = useState("");
-  const [ok, setOk] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api("/settings")
       .then(setForm)
-      .catch((e) => setError(e.message));
+      .catch((e) => errToast(e.message));
   }, []);
 
   async function save(e) {
     e.preventDefault();
-    setError("");
-    setOk("");
+    setBusy(true);
     try {
       const updated = await api("/settings", { method: "PATCH", body: form });
       setForm(updated);
-      setOk("Settings saved");
+      toast("Settings saved");
     } catch (err) {
-      setError(err.message);
+      errToast(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
-  if (!form) return <p className="muted">Loading…</p>;
+  if (!form) {
+    return (
+      <div>
+        <PageHeader title="Settings" subtitle="Cafe name, currency, tax and business hours." />
+        <div className="settings-form">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div className="field" key={i}>
+              <div className="skeleton" style={{ width: "60%" }} />
+              <div className="skeleton" style={{ width: "100%", height: 38 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const field = (key, label, type = "text") => (
     <label className="field">
@@ -43,9 +60,10 @@ export default function Settings() {
 
   return (
     <div>
-      <h1>Settings</h1>
-      {error && <div className="alert error">{error}</div>}
-      {ok && <div className="alert success">{ok}</div>}
+      <PageHeader
+        title="Settings"
+        subtitle="Cafe name, currency, tax and business hours."
+      />
       <form className="settings-form" onSubmit={save}>
         {field("cafe_name", "Cafe name")}
         {field("currency", "Currency")}
@@ -53,7 +71,9 @@ export default function Settings() {
         {field("default_hourly_rate", "Default hourly rate", "number")}
         {field("opening_time", "Opening time")}
         {field("closing_time", "Closing time")}
-        <button className="btn primary">Save settings</button>
+        <button className="btn primary" disabled={busy}>
+          {busy ? "Saving…" : "Save settings"}
+        </button>
       </form>
     </div>
   );

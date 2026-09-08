@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { useToast } from "../components/Toast";
+import PageHeader from "../components/PageHeader";
+import EmptyState from "../components/EmptyState";
+import { money, dt } from "../utils/format";
 
 const empty = { session_id: "", amount: "", method: "cash", phone: "" };
 
 export default function Payments() {
+  const { toast, error: errToast } = useToast();
   const [payments, setPayments] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [form, setForm] = useState(empty);
-  const [error, setError] = useState("");
-  const [ok, setOk] = useState("");
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
@@ -19,7 +23,7 @@ export default function Payments() {
       setPayments(p);
       setSessions(s);
     } catch (e) {
-      setError(e.message);
+      errToast(e.message);
     }
   }
   useEffect(() => {
@@ -28,8 +32,7 @@ export default function Payments() {
 
   async function record(e) {
     e.preventDefault();
-    setError("");
-    setOk("");
+    setBusy(true);
     try {
       await api("/payments", {
         method: "POST",
@@ -41,87 +44,97 @@ export default function Payments() {
         },
       });
       setForm(empty);
-      setOk("Payment recorded");
+      toast(`Payment of ${money(form.amount)} recorded`);
       await load();
     } catch (err) {
-      setError(err.message);
+      errToast(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
     <div>
-      <h1>Payments</h1>
-      {error && <div className="alert error">{error}</div>}
-      {ok && <div className="alert success">{ok}</div>}
+      <PageHeader
+        title="Payments"
+        subtitle="Record cash and M-Pesa payments against sessions or walk-in sales."
+      />
 
-      <form className="row-form" onSubmit={record}>
-        <select
-          value={form.session_id}
-          onChange={(e) => setForm({ ...form, session_id: e.target.value })}
-        >
-          <option value="">No session (walk-in)</option>
-          {sessions.map((s) => (
-            <option key={s.id} value={s.id}>
-              Session #{s.id} (station {s.station_id})
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          step="0.5"
-          min="0"
-          placeholder="Amount"
-          value={form.amount}
-          onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          required
-        />
-        <select
-          value={form.method}
-          onChange={(e) => setForm({ ...form, method: e.target.value })}
-        >
-          <option value="cash">Cash</option>
-          <option value="mpesa">M-Pesa</option>
-        </select>
-        {form.method === "mpesa" && (
+      <div className="toolbar" style={{ marginBottom: 6 }}>
+        <form className="row-form" onSubmit={record}>
+          <select
+            value={form.session_id}
+            onChange={(e) => setForm({ ...form, session_id: e.target.value })}
+          >
+            <option value="">No session (walk-in)</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                Session #{s.id} (station {s.station_id})
+              </option>
+            ))}
+          </select>
           <input
-            placeholder="Phone (07XXXXXXXX)"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            type="number"
+            step="0.5"
+            min="0"
+            placeholder="Amount"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
             required
           />
-        )}
-        <button className="btn primary">Record payment</button>
-      </form>
+          <select
+            value={form.method}
+            onChange={(e) => setForm({ ...form, method: e.target.value })}
+          >
+            <option value="cash">Cash</option>
+            <option value="mpesa">M-Pesa</option>
+          </select>
+          {form.method === "mpesa" && (
+            <input
+              placeholder="Phone (07XXXXXXXX)"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              required
+            />
+          )}
+          <button className="btn primary" disabled={busy || form.amount === ""}>
+            Record payment
+          </button>
+        </form>
+      </div>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Session</th>
-            <th>Amount</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Reference</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {payments.map((p) => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td>{p.session_id ?? "—"}</td>
-              <td>{p.amount}</td>
-              <td>{p.method}</td>
-              <td>
-                <span className={`badge ${p.status}`}>{p.status}</span>
-              </td>
-              <td className="muted small">{p.reference}</td>
-              <td>{new Date(p.created_at).toLocaleString()}</td>
+      {payments.length === 0 ? (
+        <EmptyState icon="💳" title="No payments yet" hint="Record your first payment using the form above." />
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Session</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Reference</th>
+              <th>Time</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {payments.length === 0 && <p className="muted">No payments yet.</p>}
+          </thead>
+          <tbody>
+            {payments.map((p) => (
+              <tr key={p.id}>
+                <td>{p.id}</td>
+                <td>{p.session_id ?? "—"}</td>
+                <td>{money(p.amount)}</td>
+                <td className="capitalize">{p.method}</td>
+                <td>
+                  <span className={`badge ${p.status}`}>{p.status}</span>
+                </td>
+                <td className="muted small">{p.reference}</td>
+                <td>{dt(p.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

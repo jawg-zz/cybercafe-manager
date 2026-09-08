@@ -29,23 +29,28 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
-        <h1>🖥️ Cyber Cafe Manager</h1>
+        <span className="login-logo">🖥️</span>
+        <h1>Cyber Cafe Manager</h1>
         <p className="muted">Sign in to manage your cafe</p>
         <input
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoFocus
+          autoComplete="username"
+          aria-label="Username"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          aria-label="Password"
         />
         {error && <div className="alert error">{error}</div>}
-        <button className="btn primary" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+        <button className="btn primary login-submit" disabled={busy || !username || !password}>
+          {busy ? "Signing in…" : "Sign in →"}
         </button>
         <p className="muted small">Default: admin / admin123</p>
       </form>

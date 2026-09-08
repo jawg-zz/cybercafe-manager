@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { useToast } from "../components/Toast";
+import EmptyState from "../components/EmptyState";
+import PageHeader from "../components/PageHeader";
+import ConfirmButton from "../components/ConfirmButton";
+import { money, dt } from "../utils/format";
 
 export default function Sessions() {
+  const { toast, error: errToast } = useToast();
   const [stations, setStations] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [activeOnly, setActiveOnly] = useState(true);
   const [form, setForm] = useState({ station_id: "", prepaid_minutes: 0 });
-  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
@@ -17,7 +23,7 @@ export default function Sessions() {
       setStations(st);
       setSessions(ss);
     } catch (e) {
-      setError(e.message);
+      errToast(e.message);
     }
   }
   useEffect(() => {
@@ -26,32 +32,38 @@ export default function Sessions() {
 
   async function start(e) {
     e.preventDefault();
-    setError("");
+    setBusy(true);
     try {
       await api("/sessions", { method: "POST", body: form });
       setForm({ station_id: "", prepaid_minutes: 0 });
+      toast("Session started");
       await load();
     } catch (err) {
-      setError(err.message);
+      errToast(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
   async function end(id) {
-    setError("");
     try {
       await api(`/sessions/${id}/end`, { method: "POST" });
+      toast("Session ended & billed");
       await load();
     } catch (err) {
-      setError(err.message);
+      errToast(err.message);
     }
   }
 
   const available = stations.filter((s) => s.status === "available");
+  const stationName = (id) => stations.find((st) => st.id === id)?.name || `#${id}`;
 
   return (
     <div>
-      <h1>Sessions</h1>
-      {error && <div className="alert error">{error}</div>}
+      <PageHeader
+        title="Sessions"
+        subtitle="Track who's on which PC, how long they've been there, and what they owe."
+      />
 
       <form className="row-form" onSubmit={start}>
         <select
@@ -62,7 +74,7 @@ export default function Sessions() {
           <option value="">Select station…</option>
           {available.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name} — KES {s.hourly_rate}/hr
+              {s.name} — {money(s.hourly_rate)}/hr
             </option>
           ))}
         </select>
@@ -72,56 +84,64 @@ export default function Sessions() {
           placeholder="Prepaid minutes (0 = pay later)"
           value={form.prepaid_minutes}
           onChange={(e) => setForm({ ...form, prepaid_minutes: Number(e.target.value) })}
+          style={{ width: 200 }}
         />
-        <button className="btn primary">Start session</button>
+        <button className="btn primary" disabled={busy || !form.station_id}>
+          ▶ Start session
+        </button>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={activeOnly}
+            onChange={(e) => setActiveOnly(e.target.checked)}
+          />
+          Active only
+        </label>
       </form>
 
-      <label className="toggle">
-        <input
-          type="checkbox"
-          checked={activeOnly}
-          onChange={(e) => setActiveOnly(e.target.checked)}
+      {sessions.length === 0 ? (
+        <EmptyState
+          icon="⏱️"
+          title={activeOnly ? "No active sessions" : "No sessions yet"}
+          hint="Start a session from the form above to begin billing."
         />
-        Active only
-      </label>
-
-      <table className="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Station</th>
-            <th>Started</th>
-            <th>Status</th>
-            <th>Rate</th>
-            <th>Due</th>
-            <th>Paid</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {sessions.map((s) => (
-            <tr key={s.id}>
-              <td>{s.id}</td>
-              <td>{stations.find((st) => st.id === s.station_id)?.name || s.station_id}</td>
-              <td>{new Date(s.started_at).toLocaleString()}</td>
-              <td>
-                <span className={`badge ${s.status}`}>{s.status}</span>
-              </td>
-              <td>{s.hourly_rate}</td>
-              <td>{s.amount_due}</td>
-              <td>{s.amount_paid}</td>
-              <td>
-                {s.status === "active" && (
-                  <button className="btn small danger" onClick={() => end(s.id)}>
-                    End & bill
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {sessions.length === 0 && <p className="muted">No sessions.</p>}
+      ) : (
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Station</th>
+                <th>Started</th>
+                <th>Status</th>
+                <th className="num">Due</th>
+                <th className="num">Paid</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.id}</td>
+                  <td>{stationName(s.station_id)}</td>
+                  <td>{dt(s.started_at)}</td>
+                  <td>
+                    <span className={`badge ${s.status}`}>{s.status.replace("_", " ")}</span>
+                  </td>
+                  <td className="num">{money(s.amount_due)}</td>
+                  <td className="num">{money(s.amount_paid)}</td>
+                  <td>
+                    {s.status === "active" && (
+                      <ConfirmButton label="End & bill" confirmLabel="Confirm?" onConfirm={() => end(s.id)} />
+                    )}
+                    {s.status === "ended" && <span className="muted small">billed ✓</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
