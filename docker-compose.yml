@@ -66,14 +66,14 @@ services:
     labels:
       - traefik.docker.network=dokploy-network
       - traefik.enable=true
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.rule=Host(`cyber.spidmax.win`)
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.entrypoints=web
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.service=cyber-frontend
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.middlewares=redirect-to-https@file
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.rule=Host(`cyber.spidmax.win`)
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.entrypoints=websecure
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.service=cyber-frontend
-      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.tls=true
+      - traefik.http.routers.cyber-frontend-web.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.cyber-frontend-web.entrypoints=web
+      - traefik.http.routers.cyber-frontend-web.service=cyber-frontend
+      - traefik.http.routers.cyber-frontend-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.cyber-frontend-websecure.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.cyber-frontend-websecure.entrypoints=websecure
+      - traefik.http.routers.cyber-frontend-websecure.service=cyber-frontend
+      - traefik.http.routers.cyber-frontend-websecure.tls=true
       - traefik.http.services.cyber-frontend.loadbalancer.server.port=80
     logging:
       driver: json-file
