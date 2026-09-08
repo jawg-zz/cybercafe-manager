@@ -41,7 +41,7 @@ services:
           cpus: "0.5"
           memory: 512M
     networks:
-      - dokploy-network
+      - cyber-net
 
   cyber-frontend:
     build:
@@ -62,6 +62,20 @@ services:
     stop_grace_period: 10s
     security_opt:
       - no-new-privileges:true
+
+    labels:
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.entrypoints=web
+      - traefik.http.services.agents-openclaw-ay7y6u-357-web.loadbalancer.server.port=80
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.service=agents-openclaw-ay7y6u-357-web
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.rule=Host(`cyber.spidmax.win`)
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.entrypoints=websecure
+      - traefik.http.services.agents-openclaw-ay7y6u-357-websecure.loadbalancer.server.port=80
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.service=agents-openclaw-ay7y6u-357-websecure
+      - traefik.http.routers.agents-openclaw-ay7y6u-357-websecure.tls=true
+      - traefik.enable=true
     logging:
       driver: json-file
       options:
@@ -74,6 +88,7 @@ services:
           memory: 128M
     networks:
       - dokploy-network
+      - cyber-net
 
 networks:
   cyber-net:
