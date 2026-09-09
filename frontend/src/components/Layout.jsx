@@ -118,7 +118,7 @@ export default function Layout() {
           </div>
         </div>
       </aside>
-      <div>
+      <div className="main-wrap">
         <header className="topbar">
           <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             ☰
