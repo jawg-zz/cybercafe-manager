@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { api, download } from "../api";
 import { useToast } from "../components/Toast";
 import PageHeader from "../components/PageHeader";
 import EmptyState from "../components/EmptyState";
@@ -9,6 +9,7 @@ export default function Reports() {
   const { error: errToast } = useToast();
   const [revenue, setRevenue] = useState(null);
   const [util, setUtil] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     Promise.all([api("/reports/revenue"), api("/reports/utilization")])
@@ -18,6 +19,18 @@ export default function Reports() {
       })
       .catch((e) => errToast(e.message));
   }, []);
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const filename = `payments-${new Date().toISOString().slice(0, 10)}.csv`;
+      await download("/reports/export", filename);
+    } catch (e) {
+      errToast(e.message);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   if (!revenue) {
     return (
@@ -64,12 +77,13 @@ export default function Reports() {
       {util.length === 0 ? (
         <EmptyState icon="🖥️" title="No utilization data yet" hint="Station usage from ended sessions will show up here." />
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
-              <th>Station</th>
-              <th>Minutes used</th>
-              <th>Hours</th>
+              <th scope="col">Station</th>
+              <th scope="col">Minutes used</th>
+              <th scope="col">Hours</th>
             </tr>
           </thead>
           <tbody>
@@ -82,11 +96,12 @@ export default function Reports() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
-      <a className="btn" href="/api/reports/export" download>
-        ⬇ Export payments CSV
-      </a>
+      <button className="btn primary" onClick={exportCsv} disabled={exporting}>
+        {exporting ? "Exporting…" : "⬇ Export payments CSV"}
+      </button>
     </div>
   );
 }

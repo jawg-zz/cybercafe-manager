@@ -99,6 +99,10 @@ export default function Sessions() {
         </label>
       </form>
 
+      {available.length === 0 && (
+        <p className="muted small">All stations are occupied — free one up on the Stations page first.</p>
+      )}
+
       {sessions.length === 0 ? (
         <EmptyState
           icon="⏱️"
@@ -110,13 +114,13 @@ export default function Sessions() {
           <table className="table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Station</th>
-                <th>Started</th>
-                <th>Status</th>
-                <th className="num">Due</th>
-                <th className="num">Paid</th>
-                <th></th>
+                <th scope="col">#</th>
+                <th scope="col">Station</th>
+                <th scope="col">Started</th>
+                <th scope="col">Status</th>
+                <th scope="col" className="num">Due</th>
+                <th scope="col" className="num">Paid</th>
+                <th scope="col"></th>
               </tr>
             </thead>
             <tbody>

@@ -36,6 +36,7 @@ export default function POS() {
         body: { product_id: productId, quantity: qty },
       });
       toast(`${product?.name || "Item"} added to bill`);
+      setQty(1);
       await load();
     } catch (err) {
       errToast(err.message);

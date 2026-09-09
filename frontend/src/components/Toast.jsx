@@ -11,7 +11,7 @@ export function ToastProvider({ children }) {
     if (!message) return;
     const id = Date.now() + "-" + Math.random().toString(36).slice(2, 6);
     setToasts((t) => [...t, { id, type, message }]);
-    setTimeout(() => dismiss(id), 4000);
+    setTimeout(() => dismiss(id), type === "error" ? 8000 : 4000);
   }
 
   function dismiss(id) {

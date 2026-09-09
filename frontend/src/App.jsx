@@ -13,14 +13,20 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 
+function Splash() {
+  return <div className="splash" />;
+}
+
 function Protected({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <Splash />;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
 function AdminOnly({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <Splash />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "admin") return <Navigate to="/" replace />;
   return children;

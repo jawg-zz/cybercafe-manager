@@ -86,15 +86,16 @@ export default function Users() {
       {users.length === 0 ? (
         <EmptyState icon="👤" title="No staff yet" hint="Add your first team member using the form above." />
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Username</th>
-              <th>Full name</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th scope="col">#</th>
+              <th scope="col">Username</th>
+              <th scope="col">Full name</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created</th>
             </tr>
           </thead>
           <tbody>
@@ -116,6 +117,7 @@ export default function Users() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

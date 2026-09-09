@@ -106,16 +106,17 @@ export default function Payments() {
       {payments.length === 0 ? (
         <EmptyState icon="💳" title="No payments yet" hint="Record your first payment using the form above." />
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Session</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Status</th>
-              <th>Reference</th>
-              <th>Time</th>
+              <th scope="col">#</th>
+              <th scope="col">Session</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Method</th>
+              <th scope="col">Status</th>
+              <th scope="col">Reference</th>
+              <th scope="col">Time</th>
             </tr>
           </thead>
           <tbody>
@@ -134,6 +135,7 @@ export default function Payments() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

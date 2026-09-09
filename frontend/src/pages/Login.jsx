@@ -3,13 +3,14 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
 export default function Login() {
-  const { user, login } = useAuth();
+  const { user, loading, login } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  if (loading) return <div className="splash" />;
   if (user) return <Navigate to="/" replace />;
 
   async function submit(e) {

@@ -41,3 +41,25 @@ export async function api(path, { method = "GET", body } = {}) {
   if (res.status === 204) return null;
   return res.json();
 }
+
+/** Fetch an authenticated file (e.g. CSV export) and save it to the browser. */
+export async function download(path, filename) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`/api${path}`, { headers });
+  if (res.status === 401) {
+    clearToken();
+    window.location.hash = "#/login";
+    throw new Error("Session expired");
+  }
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

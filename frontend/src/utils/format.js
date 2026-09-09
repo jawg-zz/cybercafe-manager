@@ -1,6 +1,8 @@
-export function money(amount, currency = "KES") {
+import { getCurrency } from "./currency";
+
+export function money(amount, currency = getCurrency()) {
   const n = Number(amount) || 0;
-  const frac = Math.round((n % 1) * 100) !== 0;
+  const frac = !Number.isInteger(n);
   return `${currency} ${n.toLocaleString(undefined, {
     minimumFractionDigits: frac ? 2 : 0,
     maximumFractionDigits: 2,

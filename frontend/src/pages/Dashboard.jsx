@@ -16,17 +16,37 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
+  async function load() {
+    setError("");
+    try {
+      setData(await api("/reports/dashboard"));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   useEffect(() => {
-    api("/reports/dashboard")
-      .then(setData)
-      .catch((e) => setError(e.message));
+    load();
   }, []);
-
-  if (error) return <div className="alert error">{error}</div>;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const statuses = data?.stations_by_status || {};
+
+  if (error)
+    return (
+      <div>
+        <header className="page-header">
+          <div>
+            <h1>{greeting}, {user?.full_name?.split(" ")[0] || "there"} 👋</h1>
+            <p className="muted page-subtitle">Here's what's happening at your cafe today.</p>
+          </div>
+        </header>
+        <div className="alert error">{error}</div>
+        <button className="btn primary" onClick={load}>
+          ↻ Retry
+        </button>
+      </div>
+    );
 
   return (
     <div>
@@ -75,7 +95,7 @@ export default function Dashboard() {
           <div className="card" style={{ borderLeft: "4px solid #9333ea" }}>
             <span className="card-icon">🧾</span>
             <div>
-              <div className="card-value">{data.stations_total - data.active_sessions}</div>
+              <div className="card-value">{statuses.available || 0}</div>
               <div className="card-label">Free stations</div>
             </div>
           </div>

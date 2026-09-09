@@ -69,8 +69,8 @@ export default function Settings() {
         {field("currency", "Currency")}
         {field("tax_rate", "Tax rate (%)", "number")}
         {field("default_hourly_rate", "Default hourly rate", "number")}
-        {field("opening_time", "Opening time")}
-        {field("closing_time", "Closing time")}
+        {field("opening_time", "Opening time", "time")}
+        {field("closing_time", "Closing time", "time")}
         <button className="btn primary" disabled={busy}>
           {busy ? "Saving…" : "Save settings"}
         </button>

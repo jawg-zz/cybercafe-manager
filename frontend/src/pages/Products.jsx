@@ -116,15 +116,16 @@ export default function Products() {
         categories.map((cat) => (
           <div key={cat}>
             <h2 className="capitalize">{cat}</h2>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Adjust</th>
-                </tr>
-              </thead>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Stock</th>
+                    <th scope="col">Adjust</th>
+                  </tr>
+                </thead>
               <tbody>
                 {products
                   .filter((p) => p.category === cat)
@@ -166,7 +167,8 @@ export default function Products() {
                     </tr>
                   ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         ))
       )}

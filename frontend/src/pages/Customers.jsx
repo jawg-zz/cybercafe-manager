@@ -85,14 +85,15 @@ export default function Customers() {
           hint={q ? "Try a different search." : "Add your first customer using the form above."}
         />
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Notes</th>
-              <th>Registered</th>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Notes</th>
+              <th scope="col">Registered</th>
             </tr>
           </thead>
           <tbody>
@@ -107,6 +108,7 @@ export default function Customers() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

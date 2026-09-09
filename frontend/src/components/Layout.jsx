@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { api } from "../api";
 import { useAuth } from "../auth";
+import { setCurrency } from "../utils/currency";
 
 const groups = [
   {
@@ -60,6 +62,12 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    api("/settings")
+      .then((s) => setCurrency(s.currency))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setOpen(false);
